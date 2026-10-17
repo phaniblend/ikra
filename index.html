@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Iqra - 140-Day Quran Companion</title>
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiSXFyYSIsInNob3J0X25hbWUiOiJJcXJhIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZDE3MmEiLCJ0aGVtZV9jb2xvciI6IiMwZDE3MmEifQ==">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    .font-quran { font-family: 'Amiri', serif; }
+    .font-sans { font-family: 'Inter', sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col justify-between selection:bg-emerald-600 selection:text-white">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/60 backdrop-blur px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-emerald-600 flex items-center justify-center font-bold text-lg shadow-lg shadow-emerald-900/30">اقرأ</div>
+      <div>
+        <h1 class="text-base font-bold tracking-tight text-white leading-none">Iqra</h1>
+        <p class="text-xs text-slate-400 mt-1" id="dayIndicator">Day 1 of 140 &bull; Surah Al-Fatihah</p>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span id="streakBadge" class="text-xs bg-slate-800 text-emerald-400 px-3 py-1.5 rounded-full border border-slate-700 font-medium">🔥 Streak: 1</span>
+    </div>
+  </header>
+
+  <!-- Main Practice Stage -->
+  <main class="flex-1 max-w-xl w-full mx-auto p-6 flex flex-col justify-center items-center text-center">
+
+    <!-- Progress Bar -->
+    <div class="w-full bg-slate-800/80 rounded-full h-2 mb-8 overflow-hidden">
+      <div id="progressBar" class="bg-emerald-500 h-2 rounded-full transition-all duration-300" style="width: 10%"></div>
+    </div>
+
+    <!-- Quran Arabic Unit Display -->
+    <div class="relative w-full py-12 px-6 bg-slate-900/40 rounded-3xl border border-slate-800/80 shadow-2xl flex flex-col items-center">
+      <span class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-4" id="unitLabel">Word 1 of 4</span>
+      
+      <div id="arabicTarget" class="font-quran text-6xl md:text-7xl text-slate-50 tracking-wide leading-relaxed py-4 transition-all duration-200">
+        بِسْمِ اللَّهِ
+      </div>
+
+      <!-- Meaning Reveal -->
+      <div id="meaningContainer" class="min-h-[3rem] flex items-center justify-center mt-2">
+        <p id="meaningText" class="text-base text-slate-300 font-medium italic transition-opacity duration-300 opacity-0">
+          "In the name of Allah"
+        </p>
+      </div>
+
+      <!-- Live Feedback / Pronunciation Comparison -->
+      <div id="feedbackBox" class="mt-4 text-xs font-mono px-3 py-1.5 rounded-md bg-slate-800/60 text-slate-400 border border-slate-700/50">
+        Status: Ready to listen
+      </div>
+    </div>
+
+    <!-- Controls & Interaction -->
+    <div class="mt-8 flex flex-col items-center gap-4 w-full">
+      <div class="flex items-center gap-4">
+        <!-- Replay Word Button -->
+        <button id="btnListen" class="p-4 rounded-2xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-200 transition active:scale-95 shadow-md" title="Listen to Audio">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
+        </button>
+
+        <!-- Repeat / Mic Button -->
+        <button id="btnMic" class="relative group p-6 rounded-3xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition active:scale-95 shadow-xl shadow-emerald-950/50 flex items-center justify-center">
+          <span id="micPulse" class="absolute inset-0 rounded-3xl bg-emerald-400/20 animate-ping opacity-0"></span>
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 02-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"></path></svg>
+        </button>
+
+        <!-- Skip / Override Button -->
+        <button id="btnSkip" class="p-4 rounded-2xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition active:scale-95" title="Lenient Skip / Manual Pass">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+        </button>
+      </div>
+      <p class="text-xs text-slate-500">Tap mic to speak. Lenient mode accepts close transliterations.</p>
+    </div>
+  </main>
+
+  <!-- Contextual Tafseer Modal (Ayah Complete) -->
+  <div id="tafseerModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-300">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl transform translate-y-4 transition-transform duration-300" id="tafseerCard">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Ayah Completed</span>
+        <button id="btnCloseTafseer" class="text-slate-400 hover:text-white">&times;</button>
+      </div>
+      <p id="tafseerArabic" class="font-quran text-2xl text-right text-emerald-100 leading-loose mb-3"></p>
+      <h3 class="text-sm font-semibold text-slate-200 mb-1">Context & Tafseer Summary</h3>
+      <p id="tafseerContent" class="text-xs text-slate-300 leading-relaxed max-h-48 overflow-y-auto pr-2"></p>
+      <button id="btnNextAyah" class="mt-6 w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-medium text-sm transition">Continue to Next Ayah</button>
+    </div>
+  </div>
+
+  <script>
+    // --- Sample Plan Structure (First 2 Ayat for Demonstration) ---
+    const dailyPlan = [
+      {
+        ayah: "1:1",
+        fullArabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
+        tafseer: "Starting with the Basmalah sanctifies every action. 'Ar-Rahman' refers to the All-Compassionate whose grace covers all creation, while 'Ar-Rahim' denotes particular mercy to those who seek guidance.",
+        units: [
+          { text: "بِسْمِ اللَّهِ", norm: "بسم الله", meaning: "In the name of Allah", audioUrl: "https://everyayah.com/data/wbw/001_001_001.mp3" },
+          { text: "الرَّحْمَٰنِ", norm: "الرحمن", meaning: "The Entirely Merciful", audioUrl: "https://everyayah.com/data/wbw/001_001_002.mp3" },
+          { text: "الرَّحِيمِ", norm: "الرحيم", meaning: "The Especially Merciful", audioUrl: "https://everyayah.com/data/wbw/001_001_003.mp3" }
+        ]
+      },
+      {
+        ayah: "1:2",
+        fullArabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
+        tafseer: "Al-Hamd expresses full gratitude combined with deep reverence. 'Rabb' combines ownership, nurture, and total mastery over the 'Alameen' (all domains of existence).",
+        units: [
+          { text: "الْحَمْدُ لِلَّهِ", norm: "الحمد لله", meaning: "All praise is due to Allah", audioUrl: "https://everyayah.com/data/wbw/001_002_001.mp3" },
+          { text: "رَبِّ الْعَالَمِينَ", norm: "رب العالمين", meaning: "Lord of the worlds", audioUrl: "https://everyayah.com/data/wbw/001_002_002.mp3" }
+        ]
+      }
+    ];
+
+    let currentAyahIndex = 0;
+    let currentUnitIndex = 0;
+    let recognition;
+    let isListening = false;
+
+    // --- DOM Elements ---
+    const arabicTarget = document.getElementById("arabicTarget");
+    const meaningText = document.getElementById("meaningText");
+    const unitLabel = document.getElementById("unitLabel");
+    const feedbackBox = document.getElementById("feedbackBox");
+    const progressBar = document.getElementById("progressBar");
+    const btnMic = document.getElementById("btnMic");
+    const micPulse = document.getElementById("micPulse");
+    const btnListen = document.getElementById("btnListen");
+    const btnSkip = document.getElementById("btnSkip");
+    const tafseerModal = document.getElementById("tafseerModal");
+    const tafseerCard = document.getElementById("tafseerCard");
+    const tafseerArabic = document.getElementById("tafseerArabic");
+    const tafseerContent = document.getElementById("tafseerContent");
+    const btnNextAyah = document.getElementById("btnNextAyah");
+    const btnCloseTafseer = document.getElementById("btnCloseTafseer");
+
+    // --- Arabic Normalization (Lenient Stripping) ---
+    function normalizeArabic(str) {
+      if (!str) return "";
+      return str
+        .replace(/[\u064B-\u065F\u0670]/g, "") // remove tashkeel/diacritics
+        .replace(/[إأآا]/g, "ا")
+        .replace(/ة/g, "ه")
+        .replace(/ى/g, "ي")
+        .replace(/[^\u0621-\u064A\s]/g, "") // strip punctuation
+        .trim();
+    }
+
+    // --- Levenshtein Distance for Lenient Similarity ---
+    function calculateSimilarity(a, b) {
+      const s1 = normalizeArabic(a);
+      const s2 = normalizeArabic(b);
+      if (s1 === s2) return 1.0;
+      if (!s1 || !s2) return 0.0;
+
+      const track = Array(s2.length + 1).fill(null).map(() => Array(s1.length + 1).fill(null));
+      for (let i = 0; i <= s1.length; i++) track[0][i] = i;
+      for (let j = 0; j <= s2.length; j++) track[j][0] = j;
+
+      for (let j = 1; j <= s2.length; j++) {
+        for (let i = 1; i <= s1.length; i++) {
+          const indicator = s1[i - 1] === s2[j - 1] ? 0 : 1;
+          track[j][i] = Math.min(
+            track[j][i - 1] + 1,
+            track[j - 1][i] + 1,
+            track[j - 1][i - 1] + indicator
+          );
+        }
+      }
+      const distance = track[s2.length][s1.length];
+      const maxLen = Math.max(s1.length, s2.length);
+      return (maxLen - distance) / maxLen;
+    }
+
+    // --- Audio Synthesis / Playback ---
+    function playCurrentUnit() {
+      const ayah = dailyPlan[currentAyahIndex];
+      const unit = ayah.units[currentUnitIndex];
+      feedbackBox.innerText = "Playing recitation...";
+
+      const audio = new Audio(unit.audioUrl);
+      audio.play().catch(() => {
+        // Fallback to Web Speech Synthesis if external mp3 fails
+        const utterance = new SpeechSynthesisUtterance(unit.text);
+        utterance.lang = "ar-SA";
+        utterance.rate = 0.85;
+        window.speechSynthesis.speak(utterance);
+      });
+
+      audio.onended = () => {
+        feedbackBox.innerText = "Your turn: Tap mic or speak";
+        startListening();
+      };
+    }
+
+    // --- Web Speech Recognition Initialization ---
+    function initSpeech() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        feedbackBox.innerText = "Web Speech API not supported in this browser. Use manual pass.";
+        return;
+      }
+      recognition = new SpeechRecognition();
+      recognition.lang = "ar-SA";
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        isListening = true;
+        micPulse.classList.remove("opacity-0");
+        feedbackBox.innerText = "Listening...";
+      };
+
+      recognition.onresult = (e) => {
+        const transcript = e.results[0][0].transcript;
+        validateRecitation(transcript);
+      };
+
+      recognition.onerror = () => {
+        isListening = false;
+        micPulse.classList.add("opacity-0");
+        feedbackBox.innerText = "Couldn't capture audio. Tap mic to retry.";
+      };
+
+      recognition.onend = () => {
+        isListening = false;
+        micPulse.classList.add("opacity-0");
+      };
+    }
+
+    function startListening() {
+      if (recognition && !isListening) {
+        try { recognition.start(); } catch (err) {}
+      }
+    }
+
+    // --- Validation Logic ---
+    function validateRecitation(spokenText) {
+      const ayah = dailyPlan[currentAyahIndex];
+      const unit = ayah.units[currentUnitIndex];
+      const score = calculateSimilarity(spokenText, unit.norm);
+
+      // Lenient threshold: 0.60 allows minor mispronunciations for non-native learners
+      if (score >= 0.60) {
+        feedbackBox.innerHTML = `<span class="text-emerald-400 font-semibold">Matched (${Math.round(score * 100)}%):</span> "${spokenText}"`;
+        meaningText.innerText = `"${unit.meaning}"`;
+        meaningText.classList.remove("opacity-0");
+
+        setTimeout(() => {
+          advanceUnit();
+        }, 1200);
+      } else {
+        feedbackBox.innerHTML = `<span class="text-amber-400">Heard:</span> "${spokenText}". Let's hear it again!`;
+        setTimeout(() => {
+          playCurrentUnit();
+        }, 1400);
+      }
+    }
+
+    // --- Progression Management ---
+    function advanceUnit() {
+      meaningText.classList.add("opacity-0");
+      const ayah = dailyPlan[currentAyahIndex];
+
+      if (currentUnitIndex < ayah.units.length - 1) {
+        currentUnitIndex++;
+        renderStage();
+        playCurrentUnit();
+      } else {
+        showAyahTafseer();
+      }
+    }
+
+    function renderStage() {
+      const ayah = dailyPlan[currentAyahIndex];
+      const unit = ayah.units[currentUnitIndex];
+
+      arabicTarget.innerText = unit.text;
+      unitLabel.innerText = `Ayah ${ayah.ayah} • Unit ${currentUnitIndex + 1} of ${ayah.units.length}`;
+      
+      const totalUnits = dailyPlan.reduce((acc, a) => acc + a.units.length, 0);
+      const passedUnits = dailyPlan.slice(0, currentAyahIndex).reduce((acc, a) => acc + a.units.length, 0) + currentUnitIndex;
+      progressBar.style.width = `${Math.round((passedUnits / totalUnits) * 100)}%`;
+    }
+
+    function showAyahTafseer() {
+      const ayah = dailyPlan[currentAyahIndex];
+      tafseerArabic.innerText = ayah.fullArabic;
+      tafseerContent.innerText = ayah.tafseer;
+      
+      tafseerModal.classList.remove("opacity-0", "pointer-events-none");
+      tafseerCard.classList.remove("translate-y-4");
+    }
+
+    function closeTafseerAndContinue() {
+      tafseerModal.classList.add("opacity-0", "pointer-events-none");
+      tafseerCard.classList.add("translate-y-4");
+
+      if (currentAyahIndex < dailyPlan.length - 1) {
+        currentAyahIndex++;
+        currentUnitIndex = 0;
+        renderStage();
+        playCurrentUnit();
+      } else {
+        feedbackBox.innerText = "🎉 Day 1 Complete! Excellent dedication.";
+      }
+    }
+
+    // --- Listeners ---
+    btnMic.onclick = () => {
+      if (!isListening) startListening();
+    };
+    btnListen.onclick = () => playCurrentUnit();
+    btnSkip.onclick = () => advanceUnit();
+    btnNextAyah.onclick = closeTafseerAndContinue();
+    btnCloseTafseer.onclick = closeTafseerAndContinue;
+
+    // --- Init ---
+    initSpeech();
+    renderStage();
+  </script>
+</body>
+</html>
