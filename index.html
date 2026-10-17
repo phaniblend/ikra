@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Iqra - 140-Day Quran Companion</title>
-  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiSXFyYSIsInNob3J0X25hbWUiOiJJcXJhIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZDE3MmEiLCJ0aGVtZV9jb2xvciI6IiMwZDE3MmEifQ==">
+  <link rel="manifest" href="data:application/manifest+json;base64,eyJuYW1lIjoiSXFyYSIsInNob3J0X25hbWUiOiJJcXJhIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwZDE3MmEifQ==">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -40,7 +40,7 @@
 
     <!-- Quran Arabic Unit Display -->
     <div class="relative w-full py-12 px-6 bg-slate-900/40 rounded-3xl border border-slate-800/80 shadow-2xl flex flex-col items-center">
-      <span class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-4" id="unitLabel">Word 1 of 4</span>
+      <span class="text-xs font-semibold uppercase tracking-wider text-emerald-500 mb-4" id="unitLabel">Word 1 of 3</span>
       
       <div id="arabicTarget" class="font-quran text-6xl md:text-7xl text-slate-50 tracking-wide leading-relaxed py-4 transition-all duration-200">
         بِسْمِ اللَّهِ
@@ -55,7 +55,7 @@
 
       <!-- Live Feedback / Pronunciation Comparison -->
       <div id="feedbackBox" class="mt-4 text-xs font-mono px-3 py-1.5 rounded-md bg-slate-800/60 text-slate-400 border border-slate-700/50">
-        Status: Ready to listen
+        Click speaker or mic to start
       </div>
     </div>
 
@@ -63,7 +63,7 @@
     <div class="mt-8 flex flex-col items-center gap-4 w-full">
       <div class="flex items-center gap-4">
         <!-- Replay Word Button -->
-        <button id="btnListen" class="p-4 rounded-2xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-200 transition active:scale-95 shadow-md" title="Listen to Audio">
+        <button id="btnListen" class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition active:scale-95 shadow-md" title="Listen to Audio">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"></path></svg>
         </button>
 
@@ -74,11 +74,11 @@
         </button>
 
         <!-- Skip / Override Button -->
-        <button id="btnSkip" class="p-4 rounded-2xl bg-slate-850 hover:bg-slate-800 border border-slate-700 text-slate-400 hover:text-slate-200 transition active:scale-95" title="Lenient Skip / Manual Pass">
+        <button id="btnSkip" class="p-4 rounded-2xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-slate-200 transition active:scale-95" title="Lenient Skip / Manual Pass">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
         </button>
       </div>
-      <p class="text-xs text-slate-500">Tap mic to speak. Lenient mode accepts close transliterations.</p>
+      <p class="text-xs text-slate-500">Tap mic to speak. Lenient mode accepts close pronunciations.</p>
     </div>
   </main>
 
@@ -87,7 +87,7 @@
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-lg w-full shadow-2xl transform translate-y-4 transition-transform duration-300" id="tafseerCard">
       <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
         <span class="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Ayah Completed</span>
-        <button id="btnCloseTafseer" class="text-slate-400 hover:text-white">&times;</button>
+        <button id="btnCloseTafseer" class="text-slate-400 hover:text-white text-xl leading-none">&times;</button>
       </div>
       <p id="tafseerArabic" class="font-quran text-2xl text-right text-emerald-100 leading-loose mb-3"></p>
       <h3 class="text-sm font-semibold text-slate-200 mb-1">Context & Tafseer Summary</h3>
@@ -97,16 +97,31 @@
   </div>
 
   <script>
-    // --- Sample Plan Structure (First 2 Ayat for Demonstration) ---
+    // --- 140-Day Plan Seed: Al-Fatihah Chunks ---
     const dailyPlan = [
       {
         ayah: "1:1",
         fullArabic: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
         tafseer: "Starting with the Basmalah sanctifies every action. 'Ar-Rahman' refers to the All-Compassionate whose grace covers all creation, while 'Ar-Rahim' denotes particular mercy to those who seek guidance.",
         units: [
-          { text: "بِسْمِ اللَّهِ", norm: "بسم الله", meaning: "In the name of Allah", audioUrl: "https://everyayah.com/data/wbw/001_001_001.mp3" },
-          { text: "الرَّحْمَٰنِ", norm: "الرحمن", meaning: "The Entirely Merciful", audioUrl: "https://everyayah.com/data/wbw/001_001_002.mp3" },
-          { text: "الرَّحِيمِ", norm: "الرحيم", meaning: "The Especially Merciful", audioUrl: "https://everyayah.com/data/wbw/001_001_003.mp3" }
+          { 
+            text: "بِسْمِ اللَّهِ", 
+            norm: "بسم الله", 
+            meaning: "In the name of Allah", 
+            audioUrl: "https://audio.qurancdn.com/wbw/001_001_001.mp3" 
+          },
+          { 
+            text: "الرَّحْمَٰنِ", 
+            norm: "الرحمن", 
+            meaning: "The Entirely Merciful", 
+            audioUrl: "https://audio.qurancdn.com/wbw/001_001_002.mp3" 
+          },
+          { 
+            text: "الرَّحِيمِ", 
+            norm: "الرحيم", 
+            meaning: "The Especially Merciful", 
+            audioUrl: "https://audio.qurancdn.com/wbw/001_001_003.mp3" 
+          }
         ]
       },
       {
@@ -114,16 +129,27 @@
         fullArabic: "الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ",
         tafseer: "Al-Hamd expresses full gratitude combined with deep reverence. 'Rabb' combines ownership, nurture, and total mastery over the 'Alameen' (all domains of existence).",
         units: [
-          { text: "الْحَمْدُ لِلَّهِ", norm: "الحمد لله", meaning: "All praise is due to Allah", audioUrl: "https://everyayah.com/data/wbw/001_002_001.mp3" },
-          { text: "رَبِّ الْعَالَمِينَ", norm: "رب العالمين", meaning: "Lord of the worlds", audioUrl: "https://everyayah.com/data/wbw/001_002_002.mp3" }
+          { 
+            text: "الْحَمْدُ لِلَّهِ", 
+            norm: "الحمد لله", 
+            meaning: "All praise is due to Allah", 
+            audioUrl: "https://audio.qurancdn.com/wbw/001_002_001.mp3" 
+          },
+          { 
+            text: "رَبِّ الْعَالَمِينَ", 
+            norm: "رب العالمين", 
+            meaning: "Lord of the worlds", 
+            audioUrl: "https://audio.qurancdn.com/wbw/001_002_002.mp3" 
+          }
         ]
       }
     ];
 
     let currentAyahIndex = 0;
     let currentUnitIndex = 0;
-    let recognition;
+    let recognition = null;
     let isListening = false;
+    let activeAudio = null;
 
     // --- DOM Elements ---
     const arabicTarget = document.getElementById("arabicTarget");
@@ -142,11 +168,11 @@
     const btnNextAyah = document.getElementById("btnNextAyah");
     const btnCloseTafseer = document.getElementById("btnCloseTafseer");
 
-    // --- Arabic Normalization (Lenient Stripping) ---
+    // --- Lenient Arabic Normalization ---
     function normalizeArabic(str) {
       if (!str) return "";
       return str
-        .replace(/[\u064B-\u065F\u0670]/g, "") // remove tashkeel/diacritics
+        .replace(/[\u064B-\u065F\u0670]/g, "") // strip tashkeel
         .replace(/[إأآا]/g, "ا")
         .replace(/ة/g, "ه")
         .replace(/ى/g, "ي")
@@ -154,7 +180,7 @@
         .trim();
     }
 
-    // --- Levenshtein Distance for Lenient Similarity ---
+    // --- Lenient Distance Metric ---
     function calculateSimilarity(a, b) {
       const s1 = normalizeArabic(a);
       const s2 = normalizeArabic(b);
@@ -180,32 +206,62 @@
       return (maxLen - distance) / maxLen;
     }
 
-    // --- Audio Synthesis / Playback ---
-    function playCurrentUnit() {
+    // --- Audio Player with Multi-Tier Fallback ---
+    function playCurrentUnit(triggerMicAfter = true) {
       const ayah = dailyPlan[currentAyahIndex];
       const unit = ayah.units[currentUnitIndex];
       feedbackBox.innerText = "Playing recitation...";
 
-      const audio = new Audio(unit.audioUrl);
-      audio.play().catch(() => {
-        // Fallback to Web Speech Synthesis if external mp3 fails
-        const utterance = new SpeechSynthesisUtterance(unit.text);
-        utterance.lang = "ar-SA";
-        utterance.rate = 0.85;
-        window.speechSynthesis.speak(utterance);
-      });
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+      }
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+      }
 
-      audio.onended = () => {
-        feedbackBox.innerText = "Your turn: Tap mic or speak";
-        startListening();
-      };
+      activeAudio = new Audio(unit.audioUrl);
+      
+      const playPromise = activeAudio.play();
+
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            activeAudio.onended = () => {
+              feedbackBox.innerText = "Your turn: speak into the mic";
+              if (triggerMicAfter) startListening();
+            };
+          })
+          .catch((err) => {
+            console.warn("Primary audio failed/blocked, falling back to Web Speech:", err);
+
+            if ('speechSynthesis' in window) {
+              const utterance = new SpeechSynthesisUtterance(unit.text);
+              utterance.lang = "ar-SA";
+              utterance.rate = 0.8;
+
+              utterance.onend = () => {
+                feedbackBox.innerText = "Your turn: speak into the mic";
+                if (triggerMicAfter) startListening();
+              };
+
+              utterance.onerror = () => {
+                feedbackBox.innerText = "Audio blocked. Click the Speaker to unlock.";
+              };
+
+              window.speechSynthesis.speak(utterance);
+            } else {
+              feedbackBox.innerText = "Audio unavailable. Click Mic to repeat.";
+            }
+          });
+      }
     }
 
-    // --- Web Speech Recognition Initialization ---
+    // --- Speech Recognition ---
     function initSpeech() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        feedbackBox.innerText = "Web Speech API not supported in this browser. Use manual pass.";
+        feedbackBox.innerText = "Speech recognition unsupported on this browser. Use manual skip.";
         return;
       }
       recognition = new SpeechRecognition();
@@ -227,7 +283,7 @@
       recognition.onerror = () => {
         isListening = false;
         micPulse.classList.add("opacity-0");
-        feedbackBox.innerText = "Couldn't capture audio. Tap mic to retry.";
+        feedbackBox.innerText = "Mic timed out. Click Mic to retry.";
       };
 
       recognition.onend = () => {
@@ -238,18 +294,21 @@
 
     function startListening() {
       if (recognition && !isListening) {
-        try { recognition.start(); } catch (err) {}
+        try { 
+          recognition.start(); 
+        } catch (err) {
+          console.warn("Recognition already active", err);
+        }
       }
     }
 
-    // --- Validation Logic ---
+    // --- Validation ---
     function validateRecitation(spokenText) {
       const ayah = dailyPlan[currentAyahIndex];
       const unit = ayah.units[currentUnitIndex];
       const score = calculateSimilarity(spokenText, unit.norm);
 
-      // Lenient threshold: 0.60 allows minor mispronunciations for non-native learners
-      if (score >= 0.60) {
+      if (score >= 0.55) {
         feedbackBox.innerHTML = `<span class="text-emerald-400 font-semibold">Matched (${Math.round(score * 100)}%):</span> "${spokenText}"`;
         meaningText.innerText = `"${unit.meaning}"`;
         meaningText.classList.remove("opacity-0");
@@ -258,14 +317,14 @@
           advanceUnit();
         }, 1200);
       } else {
-        feedbackBox.innerHTML = `<span class="text-amber-400">Heard:</span> "${spokenText}". Let's hear it again!`;
+        feedbackBox.innerHTML = `<span class="text-amber-400">Heard:</span> "${spokenText}". Retrying...`;
         setTimeout(() => {
-          playCurrentUnit();
+          playCurrentUnit(true);
         }, 1400);
       }
     }
 
-    // --- Progression Management ---
+    // --- Progress & UI ---
     function advanceUnit() {
       meaningText.classList.add("opacity-0");
       const ayah = dailyPlan[currentAyahIndex];
@@ -273,7 +332,7 @@
       if (currentUnitIndex < ayah.units.length - 1) {
         currentUnitIndex++;
         renderStage();
-        playCurrentUnit();
+        playCurrentUnit(true);
       } else {
         showAyahTafseer();
       }
@@ -308,22 +367,22 @@
         currentAyahIndex++;
         currentUnitIndex = 0;
         renderStage();
-        playCurrentUnit();
+        playCurrentUnit(true);
       } else {
         feedbackBox.innerText = "🎉 Day 1 Complete! Excellent dedication.";
       }
     }
 
-    // --- Listeners ---
+    // --- Event Listeners ---
     btnMic.onclick = () => {
       if (!isListening) startListening();
     };
-    btnListen.onclick = () => playCurrentUnit();
+    btnListen.onclick = () => playCurrentUnit(false);
     btnSkip.onclick = () => advanceUnit();
-    btnNextAyah.onclick = closeTafseerAndContinue();
+    btnNextAyah.onclick = closeTafseerAndContinue;
     btnCloseTafseer.onclick = closeTafseerAndContinue;
 
-    // --- Init ---
+    // --- Mount ---
     initSpeech();
     renderStage();
   </script>
