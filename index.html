@@ -556,4 +556,631 @@
     }
 
     .surah-names-col .sub-info {
-      font-
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .surah-ar-name {
+      font-family: 'Scheherazade New', serif;
+      font-size: 22px;
+      color: var(--primary-light);
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="surah-select-trigger" id="surah-trigger">
+      <span class="surah-num" id="hdr-surah-num">1</span>
+      <span id="hdr-surah-name" style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Al-Fatihah</span>
+      <span style="font-size: 10px; opacity:0.8;">▼</span>
+    </div>
+
+    <div class="header-icons">
+      <button class="icon-btn" id="theme-toggle" title="Toggle Theme">🌓</button>
+      <button class="icon-btn" id="jump-btn" title="Jump to Verse">🔢</button>
+    </div>
+  </header>
+
+  <!-- Pinned Top HUD -->
+  <div id="top-hud-card">
+    <div class="hud-inner">
+      <div class="hud-content">
+        <div class="hud-top-row">
+          <span class="hud-arabic" id="hud-ar">بِسْمِ</span>
+          <span class="hud-transliteration" id="hud-translit">Bismi</span>
+        </div>
+        <div class="hud-meaning-row">
+          <span class="hud-meaning-label">Meaning</span>
+          <span id="hud-meaning">In (the) name</span>
+        </div>
+      </div>
+      <div class="hud-actions">
+        <button class="hud-btn audio-btn" id="hud-audio-replay" title="Replay TTS Voice">🔊</button>
+        <button class="hud-btn" id="hud-dismiss" title="Dismiss">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div class="surah-header-card" id="surah-card">
+      <div class="surah-title-ar" id="card-ar-title">سُورَةُ الفَاتِحَةِ</div>
+      <div class="surah-meta" id="card-meta">Al-Fatihah • 7 Verses • Revelation: Makkah</div>
+      <div class="progress-pill">
+        <span id="progress-indicator">0 / 7 Read (0%)</span>
+      </div>
+      <div class="bismillah" id="bismillah-text">بِسْمِ ٱللَّهِ ٱلرَّحْمَـٰنِ ٱلرَّحِيمِ</div>
+    </div>
+
+    <div id="verses-container" style="display: flex; flex-direction: column; gap: 14px;"></div>
+
+    <div class="loader-wrap" id="loader" style="display:none;">
+      <div class="spinner"></div>
+      <div>Loading Surah...</div>
+    </div>
+  </main>
+
+  <div class="modal-backdrop" id="surah-modal">
+    <div class="modal-sheet">
+      <div class="modal-header">
+        <strong style="font-size: 17px;">Select Surah (1 - 114)</strong>
+        <button class="icon-btn" id="close-modal" style="color:var(--text-main);">✕</button>
+      </div>
+      <div class="modal-search-box">
+        <input type="text" id="surah-search" placeholder="Search by name, number, meaning...">
+      </div>
+      <div class="surah-list-scroll" id="surah-list"></div>
+    </div>
+  </div>
+
+  <script>
+    const ALL_SURAHS = [
+      { id: 1, name: "Al-Fatihah", ar: "الفاتحة", meaning: "The Opening", verses: 7, type: "Makkah" },
+      { id: 2, name: "Al-Baqarah", ar: "البقرة", meaning: "The Cow", verses: 286, type: "Madinah" },
+      { id: 3, name: "Ali 'Imran", ar: "آل عمران", meaning: "Family of Imran", verses: 200, type: "Madinah" },
+      { id: 4, name: "An-Nisa", ar: "النساء", meaning: "The Women", verses: 176, type: "Madinah" },
+      { id: 5, name: "Al-Ma'idah", ar: "المائدة", meaning: "The Table Spread", verses: 120, type: "Madinah" },
+      { id: 6, name: "Al-An'am", ar: "الأنعام", meaning: "The Cattle", verses: 165, type: "Makkah" },
+      { id: 7, name: "Al-A'raf", ar: "الأعراف", meaning: "The Heights", verses: 206, type: "Makkah" },
+      { id: 8, name: "Al-Anfal", ar: "الأنفال", meaning: "The Spoils of War", verses: 75, type: "Madinah" },
+      { id: 9, name: "At-Tawbah", ar: "التوبة", meaning: "The Repentance", verses: 129, type: "Madinah" },
+      { id: 10, name: "Yunus", ar: "يونس", meaning: "Jonah", verses: 109, type: "Makkah" },
+      { id: 11, name: "Hud", ar: "هود", meaning: "Hud", verses: 123, type: "Makkah" },
+      { id: 12, name: "Yusuf", ar: "يوسف", meaning: "Joseph", verses: 111, type: "Makkah" },
+      { id: 13, name: "Ar-Ra'd", ar: "الرعد", meaning: "The Thunder", verses: 43, type: "Madinah" },
+      { id: 14, name: "Ibrahim", ar: "ابراهيم", meaning: "Abraham", verses: 52, type: "Makkah" },
+      { id: 15, name: "Al-Hijr", ar: "الحجر", meaning: "The Rocky Tract", verses: 99, type: "Makkah" },
+      { id: 16, name: "An-Nahl", ar: "النحل", meaning: "The Bee", verses: 128, type: "Makkah" },
+      { id: 17, name: "Al-Isra", ar: "الإسراء", meaning: "The Night Journey", verses: 111, type: "Makkah" },
+      { id: 18, name: "Al-Kahf", ar: "الكهف", meaning: "The Cave", verses: 110, type: "Makkah" },
+      { id: 19, name: "Maryam", ar: "مريم", meaning: "Mary", verses: 98, type: "Makkah" },
+      { id: 20, name: "Taha", ar: "طه", meaning: "Ta-Ha", verses: 135, type: "Makkah" },
+      { id: 21, name: "Al-Anbiya", ar: "الأنبياء", meaning: "The Prophets", verses: 112, type: "Makkah" },
+      { id: 22, name: "Al-Hajj", ar: "الحج", meaning: "The Pilgrimage", verses: 78, type: "Madinah" },
+      { id: 23, name: "Al-Mu'minun", ar: "المؤمنون", meaning: "The Believers", verses: 118, type: "Makkah" },
+      { id: 24, name: "An-Nur", ar: "النور", meaning: "The Light", verses: 64, type: "Madinah" },
+      { id: 25, name: "Al-Furqan", ar: "الفرقان", meaning: "The Criterion", verses: 77, type: "Makkah" },
+      { id: 26, name: "Ash-Shu'ara", ar: "الشعراء", meaning: "The Poets", verses: 227, type: "Makkah" },
+      { id: 27, name: "An-Naml", ar: "النمل", meaning: "The Ant", verses: 93, type: "Makkah" },
+      { id: 28, name: "Al-Qasas", ar: "القصص", meaning: "The Stories", verses: 88, type: "Makkah" },
+      { id: 29, name: "Al-'Ankabut", ar: "العنكبوت", meaning: "The Spider", verses: 69, type: "Makkah" },
+      { id: 30, name: "Ar-Rum", ar: "الروم", meaning: "The Romans", verses: 60, type: "Makkah" },
+      { id: 31, name: "Luqman", ar: "لقمان", meaning: "Luqman", verses: 34, type: "Makkah" },
+      { id: 32, name: "As-Sajdah", ar: "السجدة", meaning: "The Prostration", verses: 30, type: "Makkah" },
+      { id: 33, name: "Al-Ahzab", ar: "الأحزاب", meaning: "The Combined Forces", verses: 73, type: "Madinah" },
+      { id: 34, name: "Saba", ar: "سبإ", meaning: "Sheba", verses: 54, type: "Makkah" },
+      { id: 35, name: "Fatir", ar: "فاطر", meaning: "Originator", verses: 45, type: "Makkah" },
+      { id: 36, name: "Ya-Sin", ar: "يس", meaning: "Ya-Sin", verses: 83, type: "Makkah" },
+      { id: 37, name: "As-Saffat", ar: "الصافات", meaning: "Those who set the Ranks", verses: 182, type: "Makkah" },
+      { id: 38, name: "Sad", ar: "ص", meaning: "The Letter Sad", verses: 88, type: "Makkah" },
+      { id: 39, name: "Az-Zumar", ar: "الزمر", meaning: "The Troops", verses: 75, type: "Makkah" },
+      { id: 40, name: "Ghafir", ar: "غافر", meaning: "The Forgiver", verses: 85, type: "Makkah" },
+      { id: 41, name: "Fussilat", ar: "فصلت", meaning: "Explained in Detail", verses: 54, type: "Makkah" },
+      { id: 42, name: "Ash-Shuraa", ar: "الشورى", meaning: "The Consultation", verses: 53, type: "Makkah" },
+      { id: 43, name: "Az-Zukhruf", ar: "الزخرف", meaning: "The Ornaments of Gold", verses: 89, type: "Makkah" },
+      { id: 44, name: "Ad-Dukhan", ar: "الدخان", meaning: "The Smoke", verses: 59, type: "Makkah" },
+      { id: 45, name: "Al-Jathiyah", ar: "الجاثية", meaning: "The Crouching", verses: 37, type: "Makkah" },
+      { id: 46, name: "Al-Ahqaf", ar: "الأحقاف", meaning: "The Wind-Curved Sandhills", verses: 35, type: "Makkah" },
+      { id: 47, name: "Muhammad", ar: "محمد", meaning: "Muhammad", verses: 38, type: "Madinah" },
+      { id: 48, name: "Al-Fath", ar: "الفتح", meaning: "The Victory", verses: 29, type: "Madinah" },
+      { id: 49, name: "Al-Hujurat", ar: "الحجرات", meaning: "The Rooms", verses: 18, type: "Madinah" },
+      { id: 50, name: "Qaf", ar: "ق", meaning: "The Letter Qaf", verses: 45, type: "Makkah" },
+      { id: 51, name: "Adh-Dhariyat", ar: "الذاريات", meaning: "The Winnowing Winds", verses: 60, type: "Makkah" },
+      { id: 52, name: "At-Tur", ar: "الطور", meaning: "The Mount", verses: 49, type: "Makkah" },
+      { id: 53, name: "An-Najm", ar: "النجم", meaning: "The Star", verses: 62, type: "Makkah" },
+      { id: 54, name: "Al-Qamar", ar: "القمر", meaning: "The Moon", verses: 55, type: "Makkah" },
+      { id: 55, name: "Ar-Rahman", ar: "الرحمن", meaning: "The Beneficent", verses: 78, type: "Madinah" },
+      { id: 56, name: "Al-Waqi'ah", ar: "الواقعة", meaning: "The Inevitable", verses: 96, type: "Makkah" },
+      { id: 57, name: "Al-Hadid", ar: "الحديد", meaning: "The Iron", verses: 29, type: "Madinah" },
+      { id: 58, name: "Al-Mujadila", ar: "المجادلة", meaning: "The Pleading Woman", verses: 22, type: "Madinah" },
+      { id: 59, name: "Al-Hashr", ar: "الحشر", meaning: "The Exile", verses: 24, type: "Madinah" },
+      { id: 60, name: "Al-Mumtahanah", ar: "الممتحنة", meaning: "She that is to be examined", verses: 13, type: "Madinah" },
+      { id: 61, name: "As-Saf", ar: "الصف", meaning: "The Ranks", verses: 14, type: "Madinah" },
+      { id: 62, name: "Al-Jumu'ah", ar: "الجمعة", meaning: "The Congregation, Friday", verses: 11, type: "Madinah" },
+      { id: 63, name: "Al-Munafiqun", ar: "المنافقون", meaning: "The Hypocrites", verses: 11, type: "Madinah" },
+      { id: 64, name: "At-Taghabun", ar: "التغابن", meaning: "The Mutual Disillusion", verses: 18, type: "Madinah" },
+      { id: 65, name: "At-Talaq", ar: "الطلاق", meaning: "The Divorce", verses: 12, type: "Madinah" },
+      { id: 66, name: "At-Tahrim", ar: "التحريم", meaning: "The Prohibition", verses: 12, type: "Madinah" },
+      { id: 67, name: "Al-Mulk", ar: "الملك", meaning: "The Sovereignty", verses: 30, type: "Makkah" },
+      { id: 68, name: "Al-Qalam", ar: "القلم", meaning: "The Pen", verses: 52, type: "Makkah" },
+      { id: 69, name: "Al-Haqqah", ar: "الحاقة", meaning: "The Reality", verses: 52, type: "Makkah" },
+      { id: 70, name: "Al-Ma'arij", ar: "المعارج", meaning: "The Ascending Stairways", verses: 44, type: "Makkah" },
+      { id: 71, name: "Nuh", ar: "نوح", meaning: "Noah", verses: 28, type: "Makkah" },
+      { id: 72, name: "Al-Jinn", ar: "الجن", meaning: "The Jinn", verses: 28, type: "Makkah" },
+      { id: 73, name: "Al-Muzzammil", ar: "المزمل", meaning: "The Enshrouded One", verses: 20, type: "Makkah" },
+      { id: 74, name: "Al-Muddaththir", ar: "المدثر", meaning: "The Cloaked One", verses: 56, type: "Makkah" },
+      { id: 75, name: "Al-Qiyamah", ar: "القيامة", meaning: "The Resurrection", verses: 40, type: "Makkah" },
+      { id: 76, name: "Al-Insan", ar: "الانسان", meaning: "The Man", verses: 31, type: "Madinah" },
+      { id: 77, name: "Al-Mursalat", ar: "المرسلات", meaning: "The Emissaries", verses: 50, type: "Makkah" },
+      { id: 78, name: "An-Naba", ar: "النبإ", meaning: "The Tidings", verses: 40, type: "Makkah" },
+      { id: 79, name: "An-Nazi'at", ar: "النازعات", meaning: "Those who drag forth", verses: 46, type: "Makkah" },
+      { id: 80, name: "'Abasa", ar: "عبس", meaning: "He Frowned", verses: 42, type: "Makkah" },
+      { id: 81, name: "At-Takwir", ar: "التكوير", meaning: "The Overthrowing", verses: 29, type: "Makkah" },
+      { id: 82, name: "Al-Infitar", ar: "الإنفطار", meaning: "The Cleaving", verses: 19, type: "Makkah" },
+      { id: 83, name: "Al-Mutaffifin", ar: "المطففين", meaning: "The Defrauding", verses: 36, type: "Makkah" },
+      { id: 84, name: "Al-Inshiqaq", ar: "الإنشقاق", meaning: "The Splitting Open", verses: 25, type: "Makkah" },
+      { id: 85, name: "Al-Buruj", ar: "البروج", meaning: "The Mansions of the Stars", verses: 22, type: "Makkah" },
+      { id: 86, name: "At-Tariq", ar: "الطارق", meaning: "The Morning Star", verses: 17, type: "Makkah" },
+      { id: 87, name: "Al-A'la", ar: "الأعلى", meaning: "The Most High", verses: 19, type: "Makkah" },
+      { id: 88, name: "Al-Ghashiyah", ar: "الغاشية", meaning: "The Overwhelming", verses: 26, type: "Makkah" },
+      { id: 89, name: "Al-Fajr", ar: "الفجر", meaning: "The Dawn", verses: 30, type: "Makkah" },
+      { id: 90, name: "Al-Balad", ar: "البلد", meaning: "The City", verses: 20, type: "Makkah" },
+      { id: 91, name: "Ash-Shams", ar: "الشمس", meaning: "The Sun", verses: 15, type: "Makkah" },
+      { id: 92, name: "Al-Layl", ar: "الليل", meaning: "The Night", verses: 21, type: "Makkah" },
+      { id: 93, name: "Ad-Duhaa", ar: "الضحى", meaning: "The Morning Hours", verses: 11, type: "Makkah" },
+      { id: 94, name: "Ash-Sharh", ar: "الشرح", meaning: "The Relief", verses: 8, type: "Makkah" },
+      { id: 95, name: "At-Tin", ar: "التين", meaning: "The Fig", verses: 8, type: "Makkah" },
+      { id: 96, name: "Al-'Alaq", ar: "العلق", meaning: "The Clot", verses: 19, type: "Makkah" },
+      { id: 97, name: "Al-Qadr", ar: "القدر", meaning: "The Power", verses: 5, type: "Makkah" },
+      { id: 98, name: "Al-Bayyinah", ar: "البينة", meaning: "The Clear Proof", verses: 8, type: "Madinah" },
+      { id: 99, name: "Az-Zalzalah", ar: "الزلزلة", meaning: "The Earthquake", verses: 8, type: "Madinah" },
+      { id: 100, name: "Al-'Adiyat", ar: "العاديات", meaning: "The Courser", verses: 11, type: "Makkah" },
+      { id: 101, name: "Al-Qari'ah", ar: "القارعة", meaning: "The Calamity", verses: 11, type: "Makkah" },
+      { id: 102, name: "At-Takathur", ar: "التكاثر", meaning: "The Rivalry in world increase", verses: 8, type: "Makkah" },
+      { id: 103, name: "Al-'Asr", ar: "العصر", meaning: "The Declining Day", verses: 3, type: "Makkah" },
+      { id: 104, name: "Al-Humazah", ar: "الهمزة", meaning: "The Traducer", verses: 9, type: "Makkah" },
+      { id: 105, name: "Al-Fil", ar: "الفيل", meaning: "The Elephant", verses: 5, type: "Makkah" },
+      { id: 106, name: "Quraysh", ar: "قريش", meaning: "Quraysh", verses: 4, type: "Makkah" },
+      { id: 107, name: "Al-Ma'un", ar: "الماعون", meaning: "The Small Kindnesses", verses: 7, type: "Makkah" },
+      { id: 108, name: "Al-Kawthar", ar: "الكوثر", meaning: "The Abundance", verses: 3, type: "Makkah" },
+      { id: 109, name: "Al-Kafirun", ar: "الكافرون", meaning: "The Disbelievers", verses: 6, type: "Makkah" },
+      { id: 110, name: "An-Nasr", ar: "النصر", meaning: "The Divine Support", verses: 3, type: "Madinah" },
+      { id: 111, name: "Al-Masad", ar: "المسد", meaning: "The Palm Fiber", verses: 5, type: "Makkah" },
+      { id: 112, name: "Al-Ikhlas", ar: "الإخلاص", meaning: "The Sincerity", verses: 4, type: "Makkah" },
+      { id: 113, name: "Al-Falaq", ar: "الفلق", meaning: "The Daybreak", verses: 5, type: "Makkah" },
+      { id: 114, name: "An-Nas", ar: "الناس", meaning: "Mankind", verses: 6, type: "Makkah" }
+    ];
+
+    let currentSurahId = 1;
+    let readAyahsMap = JSON.parse(localStorage.getItem('quran_read_ayahs') || '{}');
+    let currentVerseAudio = new Audio();
+    let currentActiveWordEl = null;
+    let lastSpokenText = "";
+
+    /* Pure Local Arabic TTS Engine */
+    let availableVoices = [];
+    let arabicVoice = null;
+
+    function initTTS() {
+      if (!('speechSynthesis' in window)) return;
+      
+      const loadVoices = () => {
+        availableVoices = window.speechSynthesis.getVoices();
+        // Priority: Arabic Saudi Arabia (Maged/Tariq on iOS), then any Arabic regional voice
+        arabicVoice = availableVoices.find(v => v.lang === 'ar-SA' || v.lang.startsWith('ar_SA')) ||
+                      availableVoices.find(v => v.lang.startsWith('ar')) || null;
+      };
+
+      loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    }
+
+    /* Clean Uthmani diacritics that can confuse mobile TTS engines while keeping vocalization intact */
+    function sanitizeForTTS(text) {
+      return text
+        .replace(/[\u06D6-\u06ED]/g, '') // Remove Quranic pause marks, sajda markers, and stop symbols
+        .replace(/[\u0610-\u061A]/g, '') // Remove decorative marks
+        .trim();
+    }
+
+    function generateWordVoice(text) {
+      if (!('speechSynthesis' in window)) return;
+      
+      window.speechSynthesis.cancel();
+      currentVerseAudio.pause();
+
+      const cleanText = sanitizeForTTS(text);
+      const utterance = new SpeechSynthesisUtterance(cleanText);
+      utterance.lang = 'ar-SA';
+      if (arabicVoice) {
+        utterance.voice = arabicVoice;
+      }
+      utterance.rate = 0.82;
+      utterance.pitch = 1.0;
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    /* IndexedDB */
+    const DB_NAME = 'NobleQuranCacheDB';
+    const DB_VERSION = 1;
+    let dbInstance = null;
+
+    function openDatabase() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(DB_NAME, DB_VERSION);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains('surahs')) {
+            db.createObjectStore('surahs', { keyPath: 'id' });
+          }
+        };
+        req.onsuccess = (e) => {
+          dbInstance = e.target.result;
+          resolve(dbInstance);
+        };
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function getCachedSurah(id) {
+      if (!dbInstance) await openDatabase();
+      return new Promise((resolve) => {
+        const tx = dbInstance.transaction('surahs', 'readonly');
+        const store = tx.objectStore('surahs');
+        const req = store.get(id);
+        req.onsuccess = () => resolve(req.result ? req.result.data : null);
+        req.onerror = () => resolve(null);
+      });
+    }
+
+    async function saveCachedSurah(id, data) {
+      if (!dbInstance) await openDatabase();
+      const tx = dbInstance.transaction('surahs', 'readwrite');
+      const store = tx.objectStore('surahs');
+      store.put({ id, data });
+    }
+
+    /* DOM Elements */
+    const hudCard = document.getElementById('top-hud-card');
+    const hudAr = document.getElementById('hud-ar');
+    const hudTranslit = document.getElementById('hud-translit');
+    const hudMeaning = document.getElementById('hud-meaning');
+    const hudAudioReplay = document.getElementById('hud-audio-replay');
+    const hudDismiss = document.getElementById('hud-dismiss');
+
+    const hdrSurahNum = document.getElementById('hdr-surah-num');
+    const hdrSurahName = document.getElementById('hdr-surah-name');
+    const cardArTitle = document.getElementById('card-ar-title');
+    const cardMeta = document.getElementById('card-meta');
+    const bismillahText = document.getElementById('bismillah-text');
+    const progressIndicator = document.getElementById('progress-indicator');
+    const versesContainer = document.getElementById('verses-container');
+    const loader = document.getElementById('loader');
+
+    const surahModal = document.getElementById('surah-modal');
+    const surahTrigger = document.getElementById('surah-trigger');
+    const closeModal = document.getElementById('close-modal');
+    const surahSearch = document.getElementById('surah-search');
+    const surahList = document.getElementById('surah-list');
+    const themeToggle = document.getElementById('theme-toggle');
+    const jumpBtn = document.getElementById('jump-btn');
+
+    /* Theme Initialization */
+    const savedTheme = localStorage.getItem('quran_theme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+
+    themeToggle.addEventListener('click', () => {
+      const cur = document.documentElement.getAttribute('data-theme');
+      const next = cur === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('quran_theme', next);
+    });
+
+    hudAudioReplay.addEventListener('click', () => {
+      if (lastSpokenText) {
+        generateWordVoice(lastSpokenText);
+      }
+    });
+
+    hudDismiss.addEventListener('click', () => {
+      hudCard.style.display = 'none';
+      if (currentActiveWordEl) {
+        currentActiveWordEl.classList.remove('active-word');
+        currentActiveWordEl = null;
+      }
+    });
+
+    /* Load Surah: Only text & word meanings (zero external audio requests) */
+    async function loadSurah(surahId) {
+      currentSurahId = surahId;
+      const meta = ALL_SURAHS.find(s => s.id === surahId);
+
+      hdrSurahNum.textContent = meta.id;
+      hdrSurahName.textContent = meta.name;
+      cardArTitle.textContent = `سُورَةُ ${meta.ar}`;
+      cardMeta.textContent = `${meta.name} • ${meta.verses} Verses • Revelation: ${meta.type}`;
+      
+      bismillahText.style.display = (surahId === 9 || surahId === 1) ? 'none' : 'block';
+
+      versesContainer.innerHTML = '';
+      loader.style.display = 'flex';
+      updateProgressUI(meta.verses);
+
+      let versesData = await getCachedSurah(surahId);
+
+      if (!versesData) {
+        try {
+          // Zero audio fields requested: only pure text, transliteration, and translation
+          const url = `https://api.quran.com/api/v4/verses/by_chapter/${surahId}?language=en&words=true&translations=20&per_page=300&word_fields=text_uthmani,transliteration`;
+          const res = await fetch(url);
+          const json = await res.json();
+          versesData = json.verses || [];
+          if (versesData.length > 0) {
+            await saveCachedSurah(surahId, versesData);
+          }
+        } catch (err) {
+          console.error("Text fetch error:", err);
+        }
+      }
+
+      loader.style.display = 'none';
+
+      if (!versesData || versesData.length === 0) {
+        versesContainer.innerHTML = `
+          <div style="text-align:center; padding:30px; color:var(--text-muted);">
+            Unable to load verses. Check connection once to cache this chapter.
+          </div>`;
+        return;
+      }
+
+      renderVerses(versesData, meta.verses);
+    }
+
+    /* Render Verses to DOM */
+    function renderVerses(verses, totalVerses) {
+      versesContainer.innerHTML = '';
+
+      verses.forEach(v => {
+        const verseKey = v.verse_key;
+        const verseNum = v.verse_number;
+        const isRead = !!readAyahsMap[verseKey];
+        const translationText = (v.translations && v.translations[0]) ? v.translations[0].text.replace(/<sup.*?<\/sup>/g, '') : '';
+
+        const card = document.createElement('div');
+        card.className = `ayah-card ${isRead ? 'read' : ''}`;
+        card.id = `verse-${verseKey}`;
+
+        const topBar = document.createElement('div');
+        topBar.className = 'ayah-top-bar';
+        topBar.innerHTML = `
+          <span class="ayah-badge">${verseKey}</span>
+          <div class="ayah-controls">
+            <button class="recite-btn" data-verse-num="${v.verse_number}">▶ Speak Ayah</button>
+            <button class="read-toggle-btn ${isRead ? 'is-read' : ''}" data-verse-key="${verseKey}">
+              ${isRead ? '✓ Read' : 'Mark as Read'}
+            </button>
+          </div>
+        `;
+
+        const arLine = document.createElement('div');
+        arLine.className = 'ayah-arabic';
+
+        let fullAyahArabicText = "";
+
+        if (v.words && v.words.length > 0) {
+          v.words.forEach(w => {
+            if (w.char_type_name === 'end') {
+              const endSpan = document.createElement('span');
+              endSpan.className = 'ayah-end-symbol';
+              endSpan.textContent = verseNum;
+              arLine.appendChild(endSpan);
+              return;
+            }
+
+            const wordArabic = w.text_uthmani || w.text;
+            fullAyahArabicText += (wordArabic + " ");
+
+            const wordSpan = document.createElement('span');
+            wordSpan.className = 'q-word';
+            wordSpan.textContent = wordArabic;
+
+            const translit = (w.transliteration && w.transliteration.text) ? w.transliteration.text : '';
+            const meaning = (w.translation && w.translation.text) ? w.translation.text : '';
+
+            // Every word voice is 100% locally generated
+            wordSpan.addEventListener('click', (e) => {
+              e.stopPropagation();
+              onWordClicked(wordSpan, wordArabic, translit, meaning);
+            });
+
+            arLine.appendChild(wordSpan);
+          });
+        }
+
+        // Store entire ayah text on recite button for pure local TTS synthesis
+        topBar.querySelector('.recite-btn').dataset.ayahText = fullAyahArabicText.trim();
+
+        const transDiv = document.createElement('div');
+        transDiv.className = 'ayah-translation';
+        transDiv.innerHTML = translationText;
+
+        card.appendChild(topBar);
+        card.appendChild(arLine);
+        card.appendChild(transDiv);
+        versesContainer.appendChild(card);
+      });
+
+      attachVerseControlListeners(totalVerses);
+      updateProgressUI(totalVerses);
+    }
+
+    /* Word Click: Directly Synthesizes Word Audio on Device */
+    function onWordClicked(el, arText, translitText, meaningText) {
+      if (currentActiveWordEl) {
+        currentActiveWordEl.classList.remove('active-word');
+      }
+      currentActiveWordEl = el;
+      el.classList.add('active-word');
+
+      hudAr.textContent = arText;
+      hudTranslit.textContent = translitText || '—';
+      hudMeaning.textContent = meaningText || '—';
+      hudCard.style.display = 'block';
+
+      lastSpokenText = arText;
+      generateWordVoice(arText);
+    }
+
+    /* Ayah Actions (All Local TTS) */
+    function attachVerseControlListeners(totalVerses) {
+      document.querySelectorAll('.read-toggle-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const key = btn.dataset.verseKey;
+          const card = document.getElementById(`verse-${key}`);
+          const wasRead = !!readAyahsMap[key];
+
+          if (wasRead) {
+            delete readAyahsMap[key];
+            btn.classList.remove('is-read');
+            btn.textContent = 'Mark as Read';
+            card.classList.remove('read');
+          } else {
+            readAyahsMap[key] = true;
+            btn.classList.add('is-read');
+            btn.textContent = '✓ Read';
+            card.classList.add('read');
+          }
+
+          localStorage.setItem('quran_read_ayahs', JSON.stringify(readAyahsMap));
+          updateProgressUI(totalVerses);
+        });
+      });
+
+      // Recite the entire Ayah locally using Web Speech API
+      document.querySelectorAll('.recite-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const card = btn.closest('.ayah-card');
+          const key = card.id.replace('verse-', '');
+          const ayahText = btn.dataset.ayahText;
+
+          if (!('speechSynthesis' in window)) return;
+
+          window.speechSynthesis.cancel();
+
+          const cleanAyah = sanitizeForTTS(ayahText);
+          const utterance = new SpeechSynthesisUtterance(cleanAyah);
+          utterance.lang = 'ar-SA';
+          if (arabicVoice) utterance.voice = arabicVoice;
+          utterance.rate = 0.85;
+
+          btn.textContent = '⏸ Speaking...';
+
+          utterance.onend = () => {
+            btn.textContent = '▶ Speak Ayah';
+            if (!readAyahsMap[key]) {
+              readAyahsMap[key] = true;
+              localStorage.setItem('quran_read_ayahs', JSON.stringify(readAyahsMap));
+              card.classList.add('read');
+              const readBtn = card.querySelector('.read-toggle-btn');
+              if (readBtn) {
+                readBtn.classList.add('is-read');
+                readBtn.textContent = '✓ Read';
+              }
+              updateProgressUI(totalVerses);
+            }
+          };
+
+          utterance.onerror = () => {
+            btn.textContent = '▶ Speak Ayah';
+          };
+
+          window.speechSynthesis.speak(utterance);
+        });
+      });
+    }
+
+    function updateProgressUI(totalVerses) {
+      let readCount = 0;
+      for (let i = 1; i <= totalVerses; i++) {
+        if (readAyahsMap[`${currentSurahId}:${i}`]) {
+          readCount++;
+        }
+      }
+      const pct = Math.round((readCount / totalVerses) * 100);
+      progressIndicator.textContent = `${readCount} / ${totalVerses} Read (${pct}%)`;
+    }
+
+    function renderSurahModalList(filter = '') {
+      surahList.innerHTML = '';
+      const q = filter.trim().toLowerCase();
+
+      ALL_SURAHS.forEach(s => {
+        if (q && !s.name.toLowerCase().includes(q) && !s.meaning.toLowerCase().includes(q) && !String(s.id).includes(q)) {
+          return;
+        }
+
+        const item = document.createElement('div');
+        item.className = 'surah-list-item';
+        item.innerHTML = `
+          <div class="surah-list-left">
+            <span class="surah-num-badge">${s.id}</span>
+            <div class="surah-names-col">
+              <span class="en-name">${s.name}</span>
+              <span class="sub-info">${s.meaning} • ${s.verses} v</span>
+            </div>
+          </div>
+          <span class="surah-ar-name">${s.ar}</span>
+        `;
+
+        item.addEventListener('click', () => {
+          surahModal.classList.remove('open');
+          loadSurah(s.id);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        surahList.appendChild(item);
+      });
+    }
+
+    surahTrigger.addEventListener('click', () => {
+      surahSearch.value = '';
+      renderSurahModalList();
+      surahModal.classList.add('open');
+      setTimeout(() => surahSearch.focus(), 150);
+    });
+
+    closeModal.addEventListener('click', () => surahModal.classList.remove('open'));
+    surahModal.addEventListener('click', (e) => {
+      if (e.target === surahModal) surahModal.classList.remove('open');
+    });
+
+    surahSearch.addEventListener('input', (e) => {
+      renderSurahModalList(e.target.value);
+    });
+
+    jumpBtn.addEventListener('click', () => {
+      const curMeta = ALL_SURAHS.find(s => s.id === currentSurahId);
+      const vNum = prompt(`Enter Verse number (1 - ${curMeta.verses}):`);
+      if (vNum) {
+        const target = document.getElementById(`verse-${currentSurahId}:${parseInt(vNum)}`);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          alert('Verse not found in this Surah.');
+        }
+      }
+    });
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTTS();
+      openDatabase().then(() => {
+        loadSurah(1);
+      });
+    });
+  </script>
+</body>
+</html>
