@@ -137,7 +137,6 @@
       background: rgba(255,255,255,0.2);
     }
 
-    /* Pinned Top HUD: Transliteration + Meaning */
     #top-hud-card {
       position: sticky;
       top: calc(var(--safe-top) + 60px);
@@ -583,7 +582,6 @@
     </div>
   </header>
 
-  <!-- Pinned Top HUD -->
   <div id="top-hud-card">
     <div class="hud-inner">
       <div class="hud-content">
@@ -597,7 +595,7 @@
         </div>
       </div>
       <div class="hud-actions">
-        <button class="hud-btn audio-btn" id="hud-audio-replay" title="Replay Studio Voice">🔊</button>
+        <button class="hud-btn audio-btn" id="hud-audio-replay" title="Replay Neural Audio">🔊</button>
         <button class="hud-btn" id="hud-dismiss" title="Dismiss">✕</button>
       </div>
     </div>
@@ -759,14 +757,10 @@
     let currentActiveWordEl = null;
     let lastSpokenText = "";
 
-    /* ElevenLabs Integration */
-    const ELEVEN_LABS_API_KEY = 'sk_bfa9f32a85b675c111c611f8faf5cd6310e06191f336a234';
-    // Highly expressive natural multilingual voice
-    const VOICE_ID = '21m00Tcm4TlvDq8ikWAM'; 
+    const GOOGLE_TTS_API_KEY = 'AIzaSyAcSabqAGMFuebY7k_JR-4aCcqOpnXG-XU';
 
-    /* IndexedDB for Verses and Audio Cache */
     const DB_NAME = 'NobleQuranCacheDB';
-    const DB_VERSION = 2;
+    const DB_VERSION = 3;
     let dbInstance = null;
 
     function openDatabase() {
@@ -825,23 +819,20 @@
       store.put({ word: wordText, blob: blob });
     }
 
-    /* Clean Uthmani diacritics */
     function cleanQuranicText(text) {
       return text
-        .replace(/[\u06D6-\u06ED]/g, '') // Remove pause/sajdah marks
+        .replace(/[\u06D6-\u06ED]/g, '')
         .replace(/[\u0610-\u061A]/g, '')
         .trim();
     }
 
-    /* Generate Word Voice via ElevenLabs with Local Caching */
-    async function generateElevenLabsVoice(rawArabicText) {
+    async function generateGoogleArabicVoice(rawArabicText) {
       const cleanText = cleanQuranicText(rawArabicText);
       if (!cleanText) return;
 
       currentVerseAudio.pause();
       currentWordAudio.pause();
 
-      // Check local cache first (saves your quota)
       const cachedBlob = await getCachedWordAudio(cleanText);
       if (cachedBlob) {
         playBlob(cachedBlob);
@@ -849,33 +840,44 @@
       }
 
       try {
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${VOICE_ID}`, {
+        const response = await fetch(`https://texttospeech.googleapis.com/v1/text:synthesize?key=${GOOGLE_TTS_API_KEY}`, {
           method: 'POST',
           headers: {
-            'xi-api-key': ELEVEN_LABS_API_KEY,
-            'Content-Type': 'application/json',
-            'Accept': 'audio/mpeg'
+            'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            text: cleanText,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: {
-              stability: 0.5,
-              similarity_boost: 0.8
+            input: { text: cleanText },
+            voice: {
+              languageCode: 'ar-XA',
+              name: 'ar-XA-Wavenet-B',
+              ssmlGender: 'MALE'
+            },
+            audioConfig: {
+              audioEncoding: 'MP3',
+              speakingRate: 0.85,
+              pitch: 0.0
             }
           })
         });
 
         if (!response.ok) {
-          throw new Error(`ElevenLabs API error: ${response.status}`);
+          const errData = await response.json();
+          throw new Error(errData.error?.message || response.statusText);
         }
 
-        const audioBlob = await response.blob();
+        const data = await response.json();
+        const binaryAudio = atob(data.audioContent);
+        const arrayBuffer = new Uint8Array(binaryAudio.length);
+        for (let i = 0; i < binaryAudio.length; i++) {
+          arrayBuffer[i] = binaryAudio.charCodeAt(i);
+        }
+        const audioBlob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+
         await saveCachedWordAudio(cleanText, audioBlob);
         playBlob(audioBlob);
+
       } catch (err) {
-        console.warn("ElevenLabs generation failed, falling back to local TTS:", err);
-        // Instant fallback to native voice if rate limited or offline
+        console.warn("Google TTS synthesis issue, using native fallback:", err);
         if ('speechSynthesis' in window) {
           window.speechSynthesis.cancel();
           const utterance = new SpeechSynthesisUtterance(cleanText);
@@ -889,10 +891,9 @@
     function playBlob(blob) {
       const url = URL.createObjectURL(blob);
       currentWordAudio.src = url;
-      currentWordAudio.play().catch(e => console.warn("Audio play error:", e));
+      currentWordAudio.play().catch(e => console.warn("Audio play issue:", e));
     }
 
-    /* DOM Selectors */
     const hudCard = document.getElementById('top-hud-card');
     const hudAr = document.getElementById('hud-ar');
     const hudTranslit = document.getElementById('hud-translit');
@@ -917,7 +918,6 @@
     const themeToggle = document.getElementById('theme-toggle');
     const jumpBtn = document.getElementById('jump-btn');
 
-    /* Theme Initialization */
     const savedTheme = localStorage.getItem('quran_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
 
@@ -930,7 +930,7 @@
 
     hudAudioReplay.addEventListener('click', () => {
       if (lastSpokenText) {
-        generateElevenLabsVoice(lastSpokenText);
+        generateGoogleArabicVoice(lastSpokenText);
       }
     });
 
@@ -942,7 +942,6 @@
       }
     });
 
-    /* Load Surah: Only text & word meanings (zero external audio requests) */
     async function loadSurah(surahId) {
       currentSurahId = surahId;
       const meta = ALL_SURAHS.find(s => s.id === surahId);
@@ -970,7 +969,7 @@
             await saveCachedSurah(surahId, versesData);
           }
         } catch (err) {
-          console.error("Text fetch error:", err);
+          console.error("Text fetch issue:", err);
         }
       }
 
@@ -987,7 +986,6 @@
       renderVerses(versesData, meta.verses);
     }
 
-    /* Render Verses to DOM */
     function renderVerses(verses, totalVerses) {
       versesContainer.innerHTML = '';
 
@@ -1034,7 +1032,6 @@
             const translit = (w.transliteration && w.transliteration.text) ? w.transliteration.text : '';
             const meaning = (w.translation && w.translation.text) ? w.translation.text : '';
 
-            // Word click generates natural ElevenLabs voice dynamically
             wordSpan.addEventListener('click', (e) => {
               e.stopPropagation();
               onWordClicked(wordSpan, wordArabic, translit, meaning);
@@ -1058,7 +1055,6 @@
       updateProgressUI(totalVerses);
     }
 
-    /* Word Click: Updates HUD & Calls ElevenLabs */
     function onWordClicked(el, arText, translitText, meaningText) {
       if (currentActiveWordEl) {
         currentActiveWordEl.classList.remove('active-word');
@@ -1072,10 +1068,9 @@
       hudCard.style.display = 'block';
 
       lastSpokenText = arText;
-      generateElevenLabsVoice(arText);
+      generateGoogleArabicVoice(arText);
     }
 
-    /* Verse Actions */
     function attachVerseControlListeners(totalVerses) {
       document.querySelectorAll('.read-toggle-btn').forEach(btn => {
         btn.addEventListener('click', () => {
@@ -1100,7 +1095,6 @@
         });
       });
 
-      // Recite full ayah via Mishary Rashid Alafasy studio recitation
       document.querySelectorAll('.recite-btn').forEach(btn => {
         btn.addEventListener('click', () => {
           const key = btn.dataset.audioKey;
