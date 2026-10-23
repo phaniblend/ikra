@@ -760,7 +760,7 @@
     const GOOGLE_TTS_API_KEY = 'AIzaSyAcSabqAGMFuebY7k_JR-4aCcqOpnXG-XU';
 
     const DB_NAME = 'NobleQuranCacheDB';
-    const DB_VERSION = 3;
+    const DB_VERSION = 4;
     let dbInstance = null;
 
     function openDatabase() {
@@ -807,16 +807,16 @@
         const tx = dbInstance.transaction('audio_cache', 'readonly');
         const store = tx.objectStore('audio_cache');
         const req = store.get(wordText);
-        req.onsuccess = () => resolve(req.result ? req.result.blob : null);
+        req.onsuccess = () => resolve(req.result ? req.result.dataUri : null);
         req.onerror = () => resolve(null);
       });
     }
 
-    async function saveCachedWordAudio(wordText, blob) {
+    async function saveCachedWordAudio(wordText, dataUri) {
       if (!dbInstance) await openDatabase();
       const tx = dbInstance.transaction('audio_cache', 'readwrite');
       const store = tx.objectStore('audio_cache');
-      store.put({ word: wordText, blob: blob });
+      store.put({ word: wordText, dataUri: dataUri });
     }
 
     function cleanQuranicText(text) {
@@ -826,16 +826,38 @@
         .trim();
     }
 
+    function unlockAndPlayAudio(dataUri) {
+      currentWordAudio.pause();
+      currentWordAudio.src = dataUri;
+      currentWordAudio.currentTime = 0;
+      
+      const playPromise = currentWordAudio.play();
+      if (playPromise !== undefined) {
+        playPromise.catch((err) => {
+          console.warn("iOS playback deferred, invoking native speech:", err);
+          if ('speechSynthesis' in window && lastSpokenText) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(cleanQuranicText(lastSpokenText));
+            utterance.lang = 'ar-SA';
+            utterance.rate = 0.85;
+            window.speechSynthesis.speak(utterance);
+          }
+        });
+      }
+    }
+
     async function generateGoogleArabicVoice(rawArabicText) {
       const cleanText = cleanQuranicText(rawArabicText);
       if (!cleanText) return;
 
       currentVerseAudio.pause();
-      currentWordAudio.pause();
 
-      const cachedBlob = await getCachedWordAudio(cleanText);
-      if (cachedBlob) {
-        playBlob(cachedBlob);
+      currentWordAudio.src = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQAAAAA=';
+      currentWordAudio.play().catch(() => {});
+
+      const cachedDataUri = await getCachedWordAudio(cleanText);
+      if (cachedDataUri) {
+        unlockAndPlayAudio(cachedDataUri);
         return;
       }
 
@@ -866,15 +888,10 @@
         }
 
         const data = await response.json();
-        const binaryAudio = atob(data.audioContent);
-        const arrayBuffer = new Uint8Array(binaryAudio.length);
-        for (let i = 0; i < binaryAudio.length; i++) {
-          arrayBuffer[i] = binaryAudio.charCodeAt(i);
-        }
-        const audioBlob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+        const audioDataUri = `data:audio/mp3;base64,${data.audioContent}`;
 
-        await saveCachedWordAudio(cleanText, audioBlob);
-        playBlob(audioBlob);
+        await saveCachedWordAudio(cleanText, audioDataUri);
+        unlockAndPlayAudio(audioDataUri);
 
       } catch (err) {
         console.warn("Google TTS synthesis issue, using native fallback:", err);
@@ -886,12 +903,6 @@
           window.speechSynthesis.speak(utterance);
         }
       }
-    }
-
-    function playBlob(blob) {
-      const url = URL.createObjectURL(blob);
-      currentWordAudio.src = url;
-      currentWordAudio.play().catch(e => console.warn("Audio play issue:", e));
     }
 
     const hudCard = document.getElementById('top-hud-card');
